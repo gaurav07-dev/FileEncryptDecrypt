@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -42,10 +43,10 @@ public class UploadFileController {
 			return ResponseEntity.badRequest().body("Request received without any file");
 		}
 
-//		String contentType = originalFile.getContentType();
-//		if (contentType != null && !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase())) {
-//			return ResponseEntity.badRequest().body("Please select a valid file (only images and PDFs are allowed)");
-//		}
+		String contentType = originalFile.getContentType();
+		if (contentType != null && !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase())) {
+			return ResponseEntity.badRequest().body("Please select a valid file (only images and PDFs are allowed)");
+		}
 
 		try {
 			byte[] encrptedFile = encryptDecrypt.encryptFile(originalFile.getBytes());

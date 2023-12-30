@@ -1,47 +1,65 @@
 package com;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
-import org.mockito.MockitoAnnotations;
-import org.springframework.http.MediaType;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 public class UploadFileControllerTest {
+
+    @Mock
+    private EncryptDecrypt encryptDecrypt;
 
     @InjectMocks
     private UploadFileController uploadFileController;
 
-    @BeforeEach
-    public void setUp() {
-        MockitoAnnotations.openMocks(this);
+    @Test
+    public void testUploadPDFFile() throws IOException {
+        byte[] pdfContent = "Sample PDF content".getBytes();
+        MockMultipartFile pdfFile = new MockMultipartFile(
+                "file", "test.pdf", "application/pdf", pdfContent);
+
+        // Mock behavior for encryption
+        when(encryptDecrypt.encryptFile(pdfContent)).thenReturn("EncryptedPDF".getBytes());
+
+        ResponseEntity<String> response = uploadFileController.uploadFile(pdfFile);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("File uploaded successfully: test.pdf.encrypted", response.getBody());
     }
 
     @Test
-    public void testImageAndPDFUpload() {
-        // Attempt to upload an image file (PNG)
-        MultipartFile pngFile = new MockMultipartFile("file", "image.png", MediaType.IMAGE_PNG_VALUE, "Some content".getBytes());
-        String pngUploadResponse = uploadFileController.uploadFile(pngFile).getBody();
-        assertEquals("File uploaded successfully: image.png", pngUploadResponse);
+    public void testUploadImageFile() throws IOException {
+        byte[] imageContent = "Sample image content".getBytes();
+        MockMultipartFile imageFile = new MockMultipartFile(
+                "file", "test.jpg", "image/jpeg", imageContent);
 
-        // Attempt to upload an image file (JPEG)
-        MultipartFile jpegFile = new MockMultipartFile("file", "image.jpeg", MediaType.IMAGE_JPEG_VALUE, "Some content".getBytes());
-        String jpegUploadResponse = uploadFileController.uploadFile(jpegFile).getBody();
-        assertEquals("File uploaded successfully: image.jpeg", jpegUploadResponse);
+        // Mock behavior for encryption
+        when(encryptDecrypt.encryptFile(imageContent)).thenReturn("EncryptedImage".getBytes());
 
-        // Attempt to upload a PDF file
-        MultipartFile pdfFile = new MockMultipartFile("file", "document.pdf", MediaType.APPLICATION_PDF_VALUE, "Some content".getBytes());
-        String pdfUploadResponse = uploadFileController.uploadFile(pdfFile).getBody();
-        assertEquals("File uploaded successfully: document.pdf", pdfUploadResponse);
+        ResponseEntity<String> response = uploadFileController.uploadFile(imageFile);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("File uploaded successfully: test.jpg.encrypted", response.getBody());
     }
 
     @Test
-    public void testNonImageOrPDFUpload() {
-        // Attempt to upload a non-image and non-PDF file (TXT file)
-        MultipartFile txtFile = new MockMultipartFile("file", "text.txt", MediaType.TEXT_PLAIN_VALUE, "Some content".getBytes());
-        String txtUploadResponse = uploadFileController.uploadFile(txtFile).getBody();
-        assertEquals("Please select a valid file (only images and PDFs are allowed)", txtUploadResponse);
+    public void testInvalidFileType() throws IOException {
+        byte[] invalidContent = "Invalid file content".getBytes();
+        MockMultipartFile invalidFile = new MockMultipartFile(
+                "file", "test.txt", "text/plain", invalidContent);
+
+        ResponseEntity<String> response = uploadFileController.uploadFile(invalidFile);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Please select a valid file (only images and PDFs are allowed)", response.getBody());
     }
 }

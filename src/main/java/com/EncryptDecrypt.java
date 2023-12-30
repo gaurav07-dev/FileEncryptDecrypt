@@ -12,6 +12,7 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -28,7 +29,7 @@ public class EncryptDecrypt {
 	
 	byte[] keyDecoder;
 
-	@PostConstruct
+	@Autowired
 	public void setUpDecoder() {
 		keyDecoder = Base64.getDecoder().decode(ENCRYPTION_KEY.getBytes());
 	}
