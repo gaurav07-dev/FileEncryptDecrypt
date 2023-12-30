@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -67,15 +68,15 @@ public class UploadFileController {
 		byte[] encryptedData = Files.readAllBytes(filePath);
 		byte[] decryptedData = encryptDecrypt.decryptFile(encryptedData);
 
-		Path newFilePath = Paths.get(UPLOAD_DOWNLOAD_DIR, fileName.substring(0, fileName.lastIndexOf(".encrypted")));
-		Files.write(newFilePath, decryptedData);
-		var fileResource = new FileSystemResource(newFilePath.toFile());
+		ByteArrayResource resource = new ByteArrayResource(decryptedData);
+		
+	    HttpHeaders headers = new HttpHeaders();
+	    headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileName);
 
-		if (fileResource.exists() && fileResource.isReadable()) {
-			return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileName)
-					.contentType(MediaType.APPLICATION_OCTET_STREAM).body(fileResource);
-		} else {
-			return ResponseEntity.notFound().build();
-		}
+	    return ResponseEntity.ok()
+	            .headers(headers)
+	            .contentLength(decryptedData.length)
+	            .contentType(MediaType.APPLICATION_OCTET_STREAM)
+	            .body(resource);
 	}
 }
